@@ -1,0 +1,7 @@
+<settings>
+<category label="General">
+<setting id="max.bandwidth" label="Max Live Bandwidth (kbps)" type="number" />
+<setting id="prefix.playlist" label="[Prefix] Playlist Name in Channels" type="bool" default="true" />
+<setting id="view_mode" label="View Mode" type="number" default="51" />
+</category>
+</settings>
