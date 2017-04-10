@@ -174,7 +174,7 @@ def stream_search(channel):
         '''
         if not data:
             continue
-        matches = re.findall(r'#EXTINF:.*?,(.*?)\n(.*?)\n',data,flags=(re.DOTALL | re.MULTILINE))
+        matches = re.findall(r'#EXTINF:.*,(.*?)\n(.*?)\n',data,flags=(re.MULTILINE))
         for name,url in matches:
             streams[playlist][url.strip()] = name.strip()
 
@@ -203,14 +203,24 @@ def stream_search(channel):
             context_items.append(("[COLOR yellow][B]%s[/B][/COLOR] " % 'Remove playlist', 'XBMC.RunPlugin(%s)' % (plugin.url_for(remove_this_playlist, playlist=playlist))))
             if plugin.get_setting('prefix.playlist') == 'true':
                 label = "[%s] %s" % (playlist,label)
-            items.append(
-            {
-                'label': label,
-                'path': plugin.url_for('play_live',url=url, name=label, thumbnail=get_icon_path('tv')),
-                'thumbnail':get_icon_path('tv'),
-                'is_playable': True,
-                'context_menu': context_items,
-            })
+            if plugin.get_setting('autoplay') == 'true':
+                items.append(
+                {
+                    'label': label,
+                    'path': plugin.url_for('play_live',url=url, name=label, thumbnail=get_icon_path('tv')),
+                    'thumbnail':get_icon_path('tv'),
+                    'is_playable': True,
+                    'context_menu': context_items,
+                })
+            else:
+                items.append(
+                {
+                    'label': label,
+                    'path': plugin.url_for('list_live',url=url, name=label, thumbnail=get_icon_path('tv')),
+                    'thumbnail':get_icon_path('tv'),
+                    'is_playable': False,
+                    'context_menu': context_items,
+                })
         return items
 
 @plugin.route('/export_channels')
@@ -245,7 +255,7 @@ def channel_player():
             'context_menu': context_items,
         })
     return items
-    
+
 @plugin.route('/play_live/<url>/<name>/<thumbnail>')
 def play_live(url,name,thumbnail):
     html = xbmcvfs.File(url,'rb').read()
@@ -257,7 +267,6 @@ def play_live(url,name,thumbnail):
         max_bandwidth = 1000000000
     for bandwidth,url in sorted(match, key=lambda x: int(x[0]), reverse=True):
         if int(bandwidth) <= max_bandwidth:
-            log(url)
             item = {
                 'label' : name,
                 'thumbnail' : thumbnail,
@@ -265,6 +274,22 @@ def play_live(url,name,thumbnail):
                 'is_playable' : True
             }
             return plugin.set_resolved_url(item)
+
+
+@plugin.route('/list_live/<url>/<name>/<thumbnail>')
+def list_live(url,name,thumbnail):
+    html = xbmcvfs.File(url,'rb').read()
+    match=re.compile('#EXT-X-STREAM-INF:.*?BANDWIDTH=([0-9]*).*?\n(.+?)\n',flags=(re.MULTILINE)).findall(html)
+    items = []
+    for bandwidth,url in sorted(match, key=lambda x: int(x[0]), reverse=True):
+        item = {
+            'label' : "%s [%s]" % (name,bandwidth),
+            'thumbnail' : thumbnail,
+            'path' : url,
+            'is_playable' : True
+        }
+        items.append(item)
+    return items
 
 @plugin.route('/playlist_listing/<playlist>')
 def playlist_listing(playlist):
@@ -280,13 +305,22 @@ def playlist_listing(playlist):
     for url in sorted(urls, key=lambda x: urls[x]):
         name = urls[url]
         context_items = []
-        items.append(
-        {
-            'label': name,
-            'path': plugin.url_for('play_live',url=url, name=name, thumbnail=get_icon_path('tv')),
-            'thumbnail':get_icon_path('tv'),
-            'is_playable': True,
-        })
+        if plugin.get_setting('autoplay') == 'true':
+            items.append(
+            {
+                'label': name,
+                'path': plugin.url_for('play_live',url=url, name=name, thumbnail=get_icon_path('tv')),
+                'thumbnail':get_icon_path('tv'),
+                'is_playable': True,
+            })
+        else:
+            items.append(
+            {
+                'label': name,
+                'path': plugin.url_for('list_live',url=url, name=name, thumbnail=get_icon_path('tv')),
+                'thumbnail':get_icon_path('tv'),
+                'is_playable': False,
+            })
     return items
 
 @plugin.route('/playlists')

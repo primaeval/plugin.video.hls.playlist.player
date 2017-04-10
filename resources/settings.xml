@@ -1,7 +1,10 @@
 <settings>
 <category label="General">
-<setting id="max.bandwidth" label="Max Live Bandwidth (kbps)" type="number" />
-<setting id="prefix.playlist" label="[Prefix] Playlist Name in Channels" type="bool" default="true" />
+<setting id="autoplay" label="Autoplay" type="bool" default="true" />
+<setting id="max.bandwidth" label="Max Bandwidth (kbps)" visible="eq(-1,true)" type="number" />
+<setting type="sep" />
+<setting id="prefix.playlist" label="[Playlist] Prefix In Channels" type="bool" default="true" />
+<setting type="sep" />
 <setting id="view_mode" label="View Mode" type="number" default="51" />
 </category>
 </settings>
